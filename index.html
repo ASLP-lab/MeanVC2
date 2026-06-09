@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="generator" content="Hugo 0.88.1" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link href="https://fonts.googleapis.com/css?family=Roboto:300,400,700" rel="stylesheet" type="text/css">
+	<link rel="stylesheet" href=""https://cdnjs.cloudflare.com/ajax/libs/highlight.js/8.4/styles/github.min.css">
+	<link rel="stylesheet" href="css/custom.css">
+	<link rel="stylesheet" href="css/normalize.css">
+
+	<title>MeanVC</title>
+	<link href="css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+
+<body data-new-gr-c-s-check-loaded="14.1091.0" data-gr-ext-installed="">
+
+<div class="container" >
+<header role="banner">
+</header>
+<main role="main">
+<article itemscope itemtype="https://schema.org/BlogPosting">
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<div class="text-center">
+	<h2>MeanVC 2</h2>
+      <h3>Robust Low-Latency Streaming Zero-Shot Voice Conversion</h3>
+        <p>
+			Guobin Ma<sup>1,*</sup>, Yuxuan Xia<sup>1,*</sup>, Yuepeng Jiang<sup>1</sup>, Dake Guo<sup>1</sup>,
+			Hanke Xie<sup>1</sup>, Jingbin Hu<sup>1</sup>, Yanbo Wang<sup>2</sup>, Lei Xie<sup>1,**</sup>,
+			Pengcheng Zhu<sup>3,**</sup>
+		</p>
+
+		<p>
+			<sup>1</sup>Audio, Speech and Language Processing Group (ASLP@NPU), School of Software, <br>
+			Northwestern Polytechnical University, China<br>
+			<sup>2</sup>The University of New South Wales, Australia<br>
+			<sup>3</sup>WeNet Open Source Community, China
+		</p>
+        <p>
+            <a href="https://arxiv.org/pdf/2606.09050">Arxiv</a> |
+			<a href="https://github.com/ASLP-lab/MeanVC2">GitHub Repo</a>
+			<!-- <a href="https://huggingface.co/ASLP-lab/MeanVC">Hugging Face</a> -->
+        </p>
+	</div>
+	<p style="text-align: justify;"><b>Abstract</b> Streaming zero-shot voice conversion (VC) has become increasingly popular due to its potential for real-time applications. The recently proposed MeanVC achieves lightweight streaming zero-shot VC, but it has several limitations: its chunk-wise autoregressive denoising doubles the effective training sequence length, conversion quality degrades under small-chunk settings, and its timbre encoder directly relies on reference mel-spectrograms, making it sensitive to reference audio quality. To address these limitations we propose MeanVC 2. We introduce future-receptive chunking (FRC), which explicitly schedules past and future receptive fields across diffusion transformer decoder layers and removes clean-chunk teacher forcing. By incorporating bounded future context, FRC enables stable conversion with a 40~ms chunk size. We further introduce a universal timbre token encoder, which constructs a timbre representation from a global speaker embedding and retrieves fine-grained timbre cues via cross-attention, improving robustness to low-quality references and enhancing zero-shot speaker similarity. Experimental results show that MeanVC 2 significantly outperforms MeanVC, while reducing latency from 211 ms to 110 ms.
+	</p>
+
+	<p>
+	<b>Contents</b>
+      <ul>
+        <li><a href="#model-overview">Model Overview</a></li>
+        <li><a href="#zero-shot-vc-samples">Streaming Zero-shot VC</a></li>
+		<li><a href="#celebrities_voice_conversion">Celebrities Voice Conversion</a></li>
+		<li><a href="#Ethics-Statement">Ethics Statement</a></li>
+		<li><a href="#Reference">Reference</a></li>
+      </ul>
+	</p>
+
+	<p><b>This page is for research demonstration purposes only.</b></p>
+	
+	
+</div>
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">		
+	<h2 id="model-overview" style="text-align: center;">Model Overview</h2>
+	<body>
+	<p style="text-align: center;">
+		<img src="figs/meanvc2.png" height="500" width="1000">
+	</p>
+	</body>
+		<p style="text-align: center;" >
+			<b>Figure 1.</b> Overall architecture of our proposed MeanVC 2.
+		</p>
+</div>
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<h2 id="#zero-shot-vc-samples" style="text-align: center;">Streaming Zero-shot VC</h2>
+	<ul>
+		<li><b>StreamVoice+<sup>1</sup>: a streaming VC system based on language model. </li> 
+		<li><b><a href="https://github.com/ASLP-lab/MeanVC">MeanVC</a><sup>2</sup> : a lightweight and streaming zero-shot voice conversion system. </li>
+	</ul>
+		<div class="table-responsive pt-3">
+			<table class="table table-hover pt-2">
+				<thead>
+				<tr>
+				<th style="text-align: center">Reference</th>
+				<th style="text-align: center">Source</th>
+				<th style="text-align: center">StreamVoice+(80ms)</th>
+				<th style="text-align: center">MeanVC(80ms)</th>
+				<th style="text-align: center">MeanVC(160ms)</th>
+				<th style="text-align: center">MeanVC 2(40ms)</th>
+				</tr>
+				</thead>
+				<tbody>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/00019809_00000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/400006.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/00019809_00000001-400006.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/00019809_00000001-400006.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/00019809_00000001-400006.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/00019809_00000001-400006.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/00020170_00000001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/VCF1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/00020170_00000001-VCF1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/00020170_00000001-VCF1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/00020170_00000001-VCF1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/00020170_00000001-VCF1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/040_001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/MF6_MAN_0078_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/040_001-MF6_MAN_0078_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/040_001-MF6_MAN_0078_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/040_001-MF6_MAN_0078_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/040_001-MF6_MAN_0078_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/M06_03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/VCM1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/M06_03-VCM1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/M06_03-VCM1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/M06_03-VCM1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/M06_03-VCM1_070005.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/MM2_MAN_0001_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/M06_03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/MM2_MAN_0001_0-M06_03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/MM2_MAN_0001_0-M06_03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/MM2_MAN_0001_0-M06_03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/MM2_MAN_0001_0-M06_03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/MF2_MAN_0001_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/VCM1_070001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/MF2_MAN_0001_0-VCM1_070001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/MF2_MAN_0001_0-VCM1_070001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/MF2_MAN_0001_0-VCM1_070001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/MF2_MAN_0001_0-VCM1_070001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+					
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/M15_02.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/M21-01.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/M15_02-M21-01.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/M15_02-M21-01.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/M15_02-M21-01.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/M15_02-M21-01.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/MM3_MAN_0014_0.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/M21-03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/MM3_MAN_0014_0-M21-03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/MM3_MAN_0014_0-M21-03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/MM3_MAN_0014_0-M21-03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/MM3_MAN_0014_0-M21-03.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/SR_side2_yq1_jingliu_114.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/VCF1_070003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/SR_side2_yq1_jingliu_114-VCF1_070003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/SR_side2_yq1_jingliu_114-VCF1_070003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/SR_side2_yq1_jingliu_114-VCF1_070003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/SR_side2_yq1_jingliu_114-VCF1_070003.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/lzl_112001.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/M06_02.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/StreamVoice+/lzl_112001-M06_02.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/lzl_112001-M06_02.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/lzl_112001-M06_02.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/lzl_112001-M06_02.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					</tr>
+				</tbody>
+			</table>
+		</div>
+</div>
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">
+	<h2 id="celebrities_voice_conversion" style="text-align: center;">Celebrities Voice Conversion</h2>
+		<div class="table-responsive pt-3">
+			<table class="table table-hover pt-2">
+				<thead>
+				<tr>
+				<th style="text-align: center">Celebrity Voice</th>
+				<th style="text-align: center">Source</th>
+				<th style="text-align: center">MeanVC(80ms)</th>
+				<th style="text-align: center">MeanVC(160ms)</th>
+				<th style="text-align: center">MeanVC 2(40ms)</th>
+				</tr>
+				</thead>
+				<tbody>
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/celeb_zh_caixukun.wav" autoplay/>Your browser does not support the audio element.</audio><br>蔡徐坤 (Xukun Cai)</td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/00005335-00000090.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/celeb_zh_caixukun-00005335-00000090.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/celeb_zh_caixukun-00005335-00000090.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/celeb_zh_caixukun-00005335-00000090.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/celeb__zh_jay.wav" autoplay/>Your browser does not support the audio element.</audio><br>周杰伦 (Jay Chou)</td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/00013931-00000039.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/celeb__zh_jay-00013931-00000039.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/celeb__zh_jay-00013931-00000039.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/celeb__zh_jay-00013931-00000039.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/celeb_zh_dingzhen.wav" autoplay/>Your browser does not support the audio element.</audio><br>丁真 (Zhen Ding)</td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/00014094-00000132.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/celeb_zh_dingzhen-00014094-00000132.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/celeb_zh_dingzhen-00014094-00000132.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/celeb_zh_dingzhen-00014094-00000132.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/celeb_zh_luoyonghao_1.wav" autoplay/>Your browser does not support the audio element.</audio><br>罗永浩 (Yonghao Luo)</td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/00004568-00000064.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/celeb_zh_luoyonghao_1-00004568-00000064.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/celeb_zh_luoyonghao_1-00004568-00000064.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/celeb_zh_luoyonghao_1-00004568-00000064.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+
+					<tr>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Spk/celeb_zh_yuchengdong.wav" autoplay/>Your browser does not support the audio element.</audio><br>余承东 (Chengdong Yu)</td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/Source/00005437-00000024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_80ms/celeb_zh_yuchengdong-00005437-00000024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_160ms/celeb_zh_yuchengdong-00005437-00000024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+						<td style="vertical-align : middle;text-align:center;"><audio controls="controls" style="width: 190px;"><source src="sample/MeanVC_2/celeb_zh_yuchengdong-00005437-00000024.wav" autoplay/>Your browser does not support the audio element.</audio></td>
+					</tr>
+
+					
+
+
+
+					<tr>
+					</tr>
+				</tbody>
+			</table>
+	</div>
+</div>
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">		
+	<h2 id="Ethics-Statement" style="text-align: center;">Ethics Statement</h2>
+	<body>
+		<p style="text-align: justify;">MeanVC 2 and the demostrating audios in this page are intended solely for academic research and ethical, non-commercial use. Users must obtain explicit consent from all involved speakers (source and target) before any voice conversion, and must not employ the system for impersonation, fraud, disinformation, harassment, or any illegal or deceptive activities. Users are required to comply with all applicable laws regarding privacy, intellectual property, and anti-deepfake regulation. The developers disclaim all liability for unethical or unlawful use and request that any misuse be reported through the designated contact channels.
+	</p>
+
+	</body>
+</div>
+
+
+
+
+<div class="container pt-5 mt-5 shadow-lg p-5 mb-5 bg-white rounded">		
+	<h2 id="Reference" style="text-align: center;">Reference</h2>
+	<body>
+		<!-- <div><cite><a href="https://arxiv.org/pdf/2401.11053.pdf">
+                [1] Zhichao Wang, Yuanzhe Chen, Xinsheng Wang, Lei Xie, and Yuping Wang, “Streamvoice: Streamable context-aware language modeling for real-time zero-shot voice conversion,” in ACL (1). 2024, pp. 7328–7338, Association for Computational Linguistics.</a></cite></div>
+		<div><cite><a href="https://arxiv.org/pdf/2411.09943.pdf">
+                [2] Songting Liu, “Zero-shot voice conversion with diffusion transformers,” CoRR, vol. abs/2411.09943, 2024.</a></cite></div> -->
+		
+		<div><cite>
+			<a href="https://arxiv.org/pdf/2408.02178">
+			[1] Zhichao Wang, Yuanzhe Chen, Xinsheng Wang, Lei Xie, Yuping Wang, 
+			“StreamVoice+: Evolving into End-to-end Streaming Zero-shot Voice Conversion,” IEEE Signal Process. Lett., vol. 31, pp. 3000–3004, 2024.
+		</a></cite></div>
+
+		<div><cite>
+			<a href="https://arxiv.org/pdf/2510.08392">
+			[2] Guobin Ma, Jixun Yao, Ziqian Ning, Yuepeng Jiang, Lingxin Xiong, Lei Xie, Pengcheng Zhu, 
+			“MeanVC: Lightweight and Streaming Zero-Shot Voice Conversion via Mean Flows,” CoRR, vol. abs/2510.08392, 2025.
+		</a></cite></div>
+
+	</body>
+</div>
+
+
+</article>
+</main>
+</div>
+
+</body>
+</html>
