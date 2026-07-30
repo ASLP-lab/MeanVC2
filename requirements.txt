@@ -1,0 +1,40 @@
+# PyTorch (install first: pip install torch==2.5.1 torchaudio==2.5.1 --index-url https://download.pytorch.org/whl/cu121)
+torch==2.5.1
+torchaudio==2.5.1
+
+# Core training
+accelerate==1.7.0
+einops==0.8.0
+ema-pytorch==0.7.7
+x-transformers==2.2.11
+torchdiffeq==0.2.5
+prefigure==0.0.10
+wandb==0.23.1
+
+# Data
+numpy>=1.26,<2.1
+
+# Audio
+soundfile>=0.12
+librosa>=0.10
+soxr>=0.5
+sox>=1.5
+pedalboard>=0.9
+kaldiio>=2.18
+pyworld
+
+# Evaluation
+funasr>=1.0
+s3prl>=0.4
+fairseq>=0.12
+jiwer>=3.0
+zhon>=2.0
+zhconv>=1.4
+omegaconf>=2.3
+
+# Utilities
+tqdm>=4.66
+PyYAML>=6.0
+matplotlib>=3.8
+scipy>=1.11
+huggingface-hub>=0.25

@@ -1,0 +1,6 @@
+sample1|/path/to/bn/sample1.npy|/path/to/mel/sample1.npy|/path/to/xvector/sample1.npy
+sample2|/path/to/bn/sample2.npy|/path/to/mel/sample2.npy|/path/to/xvector/sample2.npy
+sample3|/path/to/bn/sample3.npy|/path/to/mel/sample3.npy|/path/to/xvector/sample3.npy
+sample4|/path/to/bn/sample4.npy|/path/to/mel/sample4.npy|/path/to/xvector/sample4.npy
+sample5|/path/to/bn/sample5.npy|/path/to/mel/sample5.npy|/path/to/xvector/sample5.npy
+sample6|/path/to/bn/sample6.npy|/path/to/mel/sample6.npy|/path/to/xvector/sample6.npy
