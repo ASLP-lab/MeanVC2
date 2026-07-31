@@ -8,7 +8,7 @@
 ![License](https://img.shields.io/badge/License-Apache%202.0-blue)
 
 [![GitHub](https://img.shields.io/badge/GitHub-MeanVC2-181717?logo=github&logoColor=white)](https://github.com/ASLP-lab/MeanVC2)
-[![Demo Page](https://img.shields.io/badge/GitHub-Demo--Page-8A2BE2?logo=github&logoColor=white&labelColor=181717)](https://aslp-lab.github.io/MeanVC2-demo/)
+[![Demo Page](https://img.shields.io/badge/GitHub-Demo--Page-8A2BE2?logo=github&logoColor=white&labelColor=181717)](https://aslp-lab.github.io/MeanVC2/)
 [![HuggingFace Model](https://img.shields.io/badge/🤗%20HuggingFace-Model-FF9D00)](https://huggingface.co/ASLP-lab/MeanVC2)
 [![Lab](https://img.shields.io/badge/🏫%20ASLP-Lab-4A90D9)](http://www.npu-aslp.org/)
 
