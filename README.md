@@ -13,14 +13,14 @@
 [![Lab](https://img.shields.io/badge/🏫%20ASLP-Lab-4A90D9)](http://www.npu-aslp.org/)
 
 <p>
-    Guobin Ma<sup>1,*</sup> ·
-    Yuxuan Xia<sup>1,*</sup> ·
-    Yuepeng Jiang<sup>1</sup> ·
-    Dake Guo<sup>1</sup> ·
-    Hanke Xie<sup>1</sup> ·
-    Jingbin Hu<sup>1</sup> ·
-    Yanbo Wang<sup>2</sup> ·
-    Lei Xie<sup>1,**</sup> ·
+    Guobin Ma<sup>1,*</sup>,
+    Yuxuan Xia<sup>1,*</sup>,
+    Yuepeng Jiang<sup>1</sup>,
+    Dake Guo<sup>1</sup>,
+    Hanke Xie<sup>1</sup>,
+    Jingbin Hu<sup>1</sup>,
+    Yanbo Wang<sup>2</sup>,
+    Lei Xie<sup>1,**</sup>,
     Pengcheng Zhu<sup>3,**</sup>
 </p>
 
