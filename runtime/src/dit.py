@@ -282,6 +282,7 @@ class DiT(nn.Module):
         is_uncondition: bool = False,
         cfg_mask=None,  # [B] classifier-free guidance mask
         kv_cache=None,  # list of (k, v) tuples per layer
+        gtm_kv=None,    # precomputed (k_mem, v_mem) — skip GTM when provided
     ):
         batch, seq_len = x.shape[0], x.shape[1]
 
@@ -291,7 +292,10 @@ class DiT(nn.Module):
         t_emb = t_emb + r_emb
 
         # ---- GTM: speaker → timbre memory KV ----
-        k_mem, v_mem = self.gtm(spks)  # spks: [B, 256]
+        if gtm_kv is not None:
+            k_mem, v_mem = gtm_kv
+        else:
+            k_mem, v_mem = self.gtm(spks)  # spks: [B, 256]
 
         # ---- TVT: frame BN × GTM → time-varying timbre condition ----
         timbre_cond = self.temporal_timbre(cond, k_mem, v_mem)  # [B, T, bn_dim]

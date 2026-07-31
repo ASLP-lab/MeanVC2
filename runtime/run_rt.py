@@ -100,6 +100,10 @@ class VCRunner:
         self.vc_spk_emb = extract_embedding(self.spk_model, target_wav, device=device)
         print(f"[Init] Speaker embedding shape: {self.vc_spk_emb.shape}")
 
+        # Precompute GTM KV — speaker is fixed for the entire session
+        with torch.no_grad():
+            self.vc_gtm_kv = self.vc.gtm(self.vc_spk_emb)
+      
         # --- Streaming parameters ---
         self.chunk_size = 12 if model == "120ms" else 4
         self.block_size = 4
@@ -240,7 +244,7 @@ class VCRunner:
                     x, t_tensor, r_tensor,
                     cache=None, cond=cond, spks=self.vc_spk_emb,
                     offset=self.vc_offset, is_inference=True,
-                    kv_cache=pre_kv_cache,
+                    kv_cache=pre_kv_cache, gtm_kv=self.vc_gtm_kv,
                 )
                 x = x - dt * u
 
