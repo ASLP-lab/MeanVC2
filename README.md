@@ -39,7 +39,7 @@
 
 | Tutorial | Demo |
 |----------|------|
-| [![Tutorial](figs/meanvc2-title.png)](https://www.bilibili.com/video/BV1gaGc6WERM/) | [![Demo](figs/meanvc2-title.png)](https://www.bilibili.com/video/BV1MiGc6DEa9/) |
+| [![Tutorial](figs/meanvc2-title.png)](https://www.bilibili.com/video/BV1gaGc6WERM/) | [![Demo](figs/meanvc2-title.png)](https://www.bilibili.com/video/BV135GP6YE95/) |
 
 ## 📖 Introduction
 
