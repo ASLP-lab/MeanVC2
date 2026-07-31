@@ -43,7 +43,7 @@
         <p>
             <a href="https://arxiv.org/pdf/2606.09050">Arxiv</a> |
 			<a href="https://github.com/ASLP-lab/MeanVC2">GitHub Repo</a>
-			<!-- <a href="https://huggingface.co/ASLP-lab/MeanVC">Hugging Face</a> -->
+			<a href="https://huggingface.co/ASLP-lab/MeanVC2">Hugging Face</a>
         </p>
 	</div>
 	<p style="text-align: justify;"><b>Abstract</b> Streaming zero-shot voice conversion (VC) has become increasingly popular due to its potential for real-time applications. The recently proposed MeanVC achieves lightweight streaming zero-shot VC, but it has several limitations: its chunk-wise autoregressive denoising doubles the effective training sequence length, conversion quality degrades under small-chunk settings, and its timbre encoder directly relies on reference mel-spectrograms, making it sensitive to reference audio quality. To address these limitations we propose MeanVC 2. We introduce future-receptive chunking (FRC), which explicitly schedules past and future receptive fields across diffusion transformer decoder layers and removes clean-chunk teacher forcing. By incorporating bounded future context, FRC enables stable conversion with a 40~ms chunk size. We further introduce a universal timbre token encoder, which constructs a timbre representation from a global speaker embedding and retrieves fine-grained timbre cues via cross-attention, improving robustness to low-quality references and enhancing zero-shot speaker similarity. Experimental results show that MeanVC 2 significantly outperforms MeanVC, while reducing latency from 211 ms to 110 ms.
@@ -52,8 +52,8 @@
 	<p>
 	<b>Contents</b>
       <ul>
-        <li><a href="#video-demo">Video Demo</a></li>
         <li><a href="#model-overview">Model Overview</a></li>
+        <li><a href="#video-demo">Video Demo</a></li>
         <li><a href="#zero-shot-vc-samples">Streaming Zero-shot VC</a></li>
 		<li><a href="#celebrities_voice_conversion">Celebrities Voice Conversion</a></li>
 		<li><a href="#Ethics-Statement">Ethics Statement</a></li>
