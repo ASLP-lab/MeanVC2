@@ -34,11 +34,19 @@
 
 </div>
 
+## 🎥 Demo Video
+
+| Tutorial | Demo |
+|----------|------|
+| [![Tutorial](figs/meanvc2-title.png)](https://www.bilibili.com/video/BV1gaGc6WERM/) | [![Demo](figs/meanvc2-title.png)](https://www.bilibili.com/video/BV1MiGc6DEa9/) |
+
 ## 📖 Introduction
 
 **MeanVC2** is a robust, low-latency streaming zero-shot voice conversion (VC) system built upon the diffusion-based conditional flow matching (CFM) framework. It addresses key limitations of its predecessor MeanVC, including training inefficiency, quality degradation under small-chunk settings, and sensitivity to low-quality reference audio.
 
 By introducing **Future-Receptive Chunking (FRC)** and a **Universal Timbre Token Encoder (UTTE)**, MeanVC2 achieves high-fidelity voice conversion with an **end-to-end pipeline latency of only 110 ms** — nearly halving the 211 ms latency of MeanVC(160ms) — while maintaining superior speaker similarity and audio naturalness even with a **40 ms chunk size**. It operates under a recognition-synthesis paradigm, where a streaming ASR module extracts content representations (BNFs), and a DiT-based decoder generates target mel-spectrograms conditioned on timbre-aware features retrieved via UTTE.
+
+MeanVC2 supports **speaker-specific fine-tuning**: using the provided training scripts with a pretrained safetensors checkpoint as initialization, you can fine-tune the model on a target speaker's data for improved conversion quality. See [Training](#-training) for details.
 
 ## ✨ Key Features
 
@@ -84,6 +92,27 @@ python initialization.py --task train_40ms   # preprocess + 40ms VC + vocoder
 ```
 
 FunASR models (Paraformer, VAD, punctuation) will auto-download from ModelScope at first use.
+
+## 💿 Standalone Executables
+
+Pre-built JIT-accelerated Windows executables (CPU-only, single `.exe`) are available on Google Drive:
+
+<p align="center">
+  <a href="https://drive.google.com/drive/folders/1Pfixxg0ShqkM_KZsVFTMg0DER2WE1fH4?usp=drive_link">
+    <img src="https://img.shields.io/badge/Google%20Drive-Download-4285F4?logo=googledrive&logoColor=white" alt="Google Drive">
+  </a>
+</p>
+
+| Executable | Latency | Speaker Input | Size |
+|-----------|---------|---------------|------|
+| **40ms_40ms.exe** | 40ms chunk + 40ms future = 80ms | WAV file (WavLM + ECAPA-TDNN) | Full |
+| **120ms_40ms.exe** | 120ms chunk + 40ms future = 160ms | WAV file (WavLM + ECAPA-TDNN) | Full |
+| **40ms_40ms_npy.exe** | 40ms chunk + 40ms future = 80ms | Pre-extracted NPY file | ~1.2 GB smaller |
+| **120ms_40ms_npy.exe** | 120ms chunk + 40ms future = 160ms | Pre-extracted NPY file | ~1.2 GB smaller |
+
+**Audio Routing**: Input from microphone or VB-CABLE Output (capture PC playback); output to headphones/speakers or VB-CABLE Input (send to other apps, e.g., set as mic in Tencent Meeting).
+
+> **Requirements**: Windows 10+, 8 GB RAM, ~4 GB free disk space. See `intro.txt` in the drive folder for details.
 
 ## 📁 Data Preparation
 
