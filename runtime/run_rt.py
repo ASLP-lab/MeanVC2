@@ -40,20 +40,33 @@ from src.speaker import init_speaker_model, extract_embedding
 # Model paths — relative to meanvc2 root
 # ---------------------------------------------------------------------------
 _ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-ASR_CHECKPOINT_PATH = os.path.join(_ROOT, "preprocess/ckpts/fastu2pp_80ms.pt")
 VOCODER_PATH = os.path.join(_ROOT, "ckpts/vocos/vocos.pt")
 SPEAKER_MODEL_PATH = os.path.join(_ROOT, "preprocess/ckpts/wavlm_large_finetune.pth")
 WAVLM_CONFIG_PATH = os.path.join(_ROOT, "preprocess/ckpts/wavlm_large_cfg.pt")
 
-# Per-model VC checkpoint + config
+# Per-model paths + ASR parameters
+#   80ms ASR (40+40 VC):  fastu2pp_80ms.pt,  BN_WINDOW=11, BN_STRIDE=8
+#   160ms ASR (120+40 VC): fastu2pp_160ms.pt, BN_WINDOW=19, BN_STRIDE=16
 MODEL_PATHS = {
     "120ms": {
         "ckpt": os.path.join(_ROOT, "ckpts/pretrained_models/meanvc2_120ms_40ms.safetensors"),
         "config": os.path.join(_ROOT, "src/config/config_120ms_40ms.json"),
+        "asr_ckpt": os.path.join(_ROOT, "preprocess/ckpts/fastu2pp_160ms.pt"),
+        "bn_window": 19,
+        "bn_stride": 16,
+        "required_cache_size": 8,
+        "asr_offset_init": 8,
+        "asr_offset_step": 4,
     },
     "40ms": {
         "ckpt": os.path.join(_ROOT, "ckpts/pretrained_models/meanvc2_40ms_40ms.safetensors"),
         "config": os.path.join(_ROOT, "src/config/config_40ms_40ms.json"),
+        "asr_ckpt": os.path.join(_ROOT, "preprocess/ckpts/fastu2pp_80ms.pt"),
+        "bn_window": 11,
+        "bn_stride": 8,
+        "required_cache_size": 4,
+        "asr_offset_init": 4,
+        "asr_offset_step": 2,
     },
 }
 
@@ -75,10 +88,16 @@ class VCRunner:
         paths = MODEL_PATHS[model]
         vc_ckpt = paths["ckpt"]
         vc_config = paths["config"]
+        self._asr_ckpt = paths["asr_ckpt"]
+        self._bn_window = paths["bn_window"]
+        self._bn_stride = paths["bn_stride"]
+        self._required_cache_size = paths["required_cache_size"]
+        self._asr_offset_init = paths["asr_offset_init"]
+        self._asr_offset_step = paths["asr_offset_step"]
 
         # --- ASR (JIT Fast-U2++) ---
         print("[Init] Loading ASR encoder (JIT)...")
-        self.asr = torch.jit.load(ASR_CHECKPOINT_PATH)
+        self.asr = torch.jit.load(self._asr_ckpt)
         self.asr.eval()
 
         # --- VC ---
@@ -121,11 +140,11 @@ class VCRunner:
 
     def _init_cache(self):
         self.samples_cache_len = 400 + 2 * 160
-        self.samples_cache = None
+        self.samples_cache = np.full(self.samples_cache_len, -0.5, dtype=np.float32)
         self.fbank_cache = None
         self.encoder_output_cache = None
-        self.asr_offset = 4
-        self.asr_att_cache = torch.zeros(6, 4, 4, 128)
+        self.asr_offset = self._asr_offset_init
+        self.asr_att_cache = torch.zeros(6, 4, self._required_cache_size, 128)
         self.asr_cnn_cache = torch.zeros(6, 1, 256, 8)
 
         self.vc_kv_cache = None
@@ -144,10 +163,6 @@ class VCRunner:
 
     def _encode_chunk(self, samples: np.ndarray) -> torch.Tensor | None:
         with torch.no_grad():
-            if self.samples_cache is None:
-                self.samples_cache = samples.copy()
-                return None
-
             padded = np.concatenate((self.samples_cache, samples))
             self.samples_cache = padded[-self.samples_cache_len:]
 
@@ -160,30 +175,30 @@ class VCRunner:
                                  sample_frequency=16000)
 
             # Prepend cached fbank frames for continuity
-            if self.fbank_cache is not None:
+            had_fbank_cache = self.fbank_cache is not None
+            if had_fbank_cache:
                 fbanks = torch.cat([self.fbank_cache, fbanks], dim=0)
             self.fbank_cache = fbanks[-3:]  # cache overlap for next chunk
 
-            # Reset ASR offset periodically
+            # Reset ASR offset periodically — preserve cache-relative position
             if self.asr_offset >= 4000:
-                self.asr_offset = 4
+                cache_t = self.asr_att_cache.size(2) if self.asr_att_cache.dim() > 0 else 0
+                self.asr_offset = max(cache_t, self.asr_offset - 4000)
 
-            # JIT ASR: sliding window of 11 fbank frames → 2 BN frames per call
-            BN_WINDOW = 11
-            BN_STRIDE = 8  # matches non-streaming BN rate (40ms per BN frame)
+            # JIT ASR: sliding window of fbank frames → BN frames per call
             bns = []
             i = 0
-            while i + BN_WINDOW <= fbanks.shape[0]:
-                fb = fbanks[i:i+BN_WINDOW].unsqueeze(0)
+            while i + self._bn_window <= fbanks.shape[0]:
+                fb = fbanks[i:i+self._bn_window].unsqueeze(0)
                 out, self.asr_att_cache, self.asr_cnn_cache = self.asr(
                     fb,
                     torch.tensor(self.asr_offset, dtype=torch.int64),
-                    torch.tensor(4, dtype=torch.int64),
+                    torch.tensor(self._required_cache_size, dtype=torch.int64),
                     self.asr_att_cache, self.asr_cnn_cache,
                 )
                 bns.append(out.squeeze(0).detach())
-                self.asr_offset += 2
-                i += BN_STRIDE
+                self.asr_offset += self._asr_offset_step
+                i += self._bn_stride
 
             if not bns:
                 return None
@@ -193,7 +208,7 @@ class VCRunner:
             bn = bn.unsqueeze(0)        # [1, N, 256]
 
             # Drop first 2 BN from fbank cache overlap, cache last frame
-            if self.fbank_cache is not None and len(bns) > 1:
+            if had_fbank_cache and len(bns) > 1:
                 bn = bn[:, 2:, :]
 
             if self.encoder_output_cache is not None:
