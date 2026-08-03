@@ -55,8 +55,8 @@ def main():
                              energy_floor=0.0, dither=0.0,
                              sample_frequency=16000).squeeze(0)
 
-        offset = 4
-        att_cache = torch.zeros(6, 4, 4, 128)
+        offset = 8
+        att_cache = torch.zeros(6, 4, 8, 128)
         cnn_cache = torch.zeros(6, 1, 256, 8)
 
         bns = []
@@ -66,11 +66,11 @@ def main():
             out, att_cache, cnn_cache = asr(
                 fb,
                 torch.tensor(offset, dtype=torch.int64),
-                torch.tensor(4, dtype=torch.int64),
+                torch.tensor(8, dtype=torch.int64),
                 att_cache, cnn_cache,
             )
             bns.append(out.squeeze(0).detach())
-            offset += 2
+            offset += 4
             i += BN_STRIDE
 
         bn = torch.cat(bns, dim=0).numpy()

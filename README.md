@@ -177,24 +177,16 @@ No pre-extracted features needed — input two wavs, output converted audio:
 
 ```bash
 # 120ms+40ms model (recommended for quality)
-python src/infer/infer_e2e.py \
+python src/infer/infer_e2e.py --model 120ms \
     --source-wav /path/to/source.wav \
     --target-wav /path/to/target.wav \
-    --ckpt-path ckpts/pretrained_models/meanvc2_120ms_40ms.safetensors \
-    --model-config src/config/config_120ms_40ms.json \
-    --vocoder-ckpt-path ckpts/vocos/vocos.pt \
-    --chunk-size 12 --steps 3 \
-    --output-wav output.wav
+    --output-wav output.wav --steps 3
 
 # 40ms+40ms model (lower latency)
-python src/infer/infer_e2e.py \
+python src/infer/infer_e2e.py --model 40ms \
     --source-wav /path/to/source.wav \
     --target-wav /path/to/target.wav \
-    --ckpt-path ckpts/pretrained_models/meanvc2_40ms_40ms.safetensors \
-    --model-config src/config/config_40ms_40ms.json \
-    --vocoder-ckpt-path ckpts/vocos/vocos.pt \
-    --chunk-size 4 --steps 3 \
-    --output-wav output.wav
+    --output-wav output.wav --steps 3
 ```
 
 ### Real-Time Streaming
