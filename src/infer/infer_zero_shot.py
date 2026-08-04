@@ -1,7 +1,11 @@
-import os
+import os, sys
 import json
 import argparse
 import glob
+
+_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+sys.path.insert(0, _ROOT)
+sys.path.insert(0, os.path.join(_ROOT, "src/infer"))
 
 from dit_kvcache import DiT
 
@@ -10,7 +14,7 @@ import numpy as np
 import torch
 import time
 from tqdm import tqdm
-import torchaudio
+import soundfile as sf
 from functools import partial
 from multiprocessing import Pool
 import multiprocessing
@@ -157,7 +161,7 @@ def process_utterance_worker(args_tuple):
         np.save(mel_output_path, mel.cpu().numpy())
         
         wav_output_path = os.path.join(output_dir_wav, utt + ".wav")
-        torchaudio.save(wav_output_path, wav.cpu(), 16000)
+        sf.write(wav_output_path, wav.cpu().squeeze().numpy(), 16000)
         
         return utt, time_item, None
         
@@ -217,7 +221,7 @@ def process_batch_worker(args_tuple):
                 np.save(mel_output_path, mel.cpu().numpy())
                 
                 wav_output_path = os.path.join(output_dir_wav, utt + ".wav")
-                torchaudio.save(wav_output_path, wav.cpu(), 16000)
+                sf.write(wav_output_path, wav.cpu().squeeze().numpy(), 16000)
                 
                 results.append((utt, time_item, None))
                 
@@ -320,8 +324,8 @@ if __name__ == "__main__":
     parser.add_argument('--method', type=str, default='batch', 
                        choices=['simple', 'batch'],
                        help='Multiprocessing method: simple (one utterance per process), batch')
-    parser.add_argument('--num-processes', type=int, default=20, help='Number of processes')
-    parser.add_argument('--batch-size', type=int, default=20, help='Batch size')
+    parser.add_argument('--num-processes', type=int, default=1, help='Number of processes')
+    parser.add_argument('--batch-size', type=int, default=1, help='Batch size')
 
     args = parser.parse_args()
     setup_seed(args.seed)

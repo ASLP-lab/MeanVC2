@@ -345,12 +345,12 @@ class VCRunner:
         import soundfile as sf
 
         wav, sr = sf.read(input_path)
+        if wav.ndim == 2:
+            wav = np.mean(wav, axis=1)
         if sr != 16000:
             import librosa
             wav = librosa.resample(wav, orig_sr=sr, target_sr=16000)
             sr = 16000
-        if wav.ndim == 2:
-            wav = np.mean(wav, axis=1)
         wav = wav.astype(np.float32)
 
         self._init_cache()
@@ -363,21 +363,21 @@ class VCRunner:
 
         while pos < len(wav):
             end = min(pos + self.CHUNK, len(wav))
-            if end - pos < self.CHUNK:
-                chunk = np.pad(wav[pos:end], (0, self.CHUNK - (end - pos)), mode='constant')
-            else:
-                chunk = wav[pos:end]
+            chunk = wav[pos:end]  # no zero-padding — avoids silence artifacts at tail
             pos = end
 
             out = self.process_chunk(chunk.astype(np.float32))
             if out is not None:
                 output_parts.append(out)
 
-        # Flush remaining BN buffer
+        # Flush remaining BN buffer — replicate last BN frame as future context
         while self.bn_buffer is not None and self.bn_buffer.shape[1] >= self.chunk_size:
             pad_cur = self.bn_buffer[:, :self.chunk_size, :]
-            pad_fut = torch.zeros(1, self.block_size, self.bn_buffer.shape[-1],
-                                  device=self.bn_buffer.device, dtype=self.bn_buffer.dtype)
+            if self.bn_buffer.shape[1] > self.chunk_size:
+                pad_fut = self.bn_buffer[:, self.chunk_size:self._min_bn_len, :]
+            else:
+                last_frame = self.bn_buffer[:, -1:, :]
+                pad_fut = last_frame.repeat(1, self.block_size, 1)
             cond = torch.cat([pad_cur, pad_fut], dim=1)
             self.bn_buffer = self.bn_buffer[:, self.chunk_size:, :]
             if self.bn_buffer.shape[1] == 0:
@@ -385,14 +385,13 @@ class VCRunner:
             mel = self._vc_step(cond)
             output_parts.append(self._decode_mel(mel))
 
-        # Drain trailing partial BN
+        # Drain trailing partial BN — pad with edge replication
         if self.bn_buffer is not None and self.bn_buffer.shape[1] > 0:
             n_rem = self.bn_buffer.shape[1]
-            pad_cur = torch.zeros(1, self.chunk_size, self.bn_buffer.shape[-1],
-                                  device=self.bn_buffer.device, dtype=self.bn_buffer.dtype)
+            last_frame = self.bn_buffer[:, -1:, :]
+            pad_cur = last_frame.repeat(1, self.chunk_size, 1)
             pad_cur[:, :n_rem, :] = self.bn_buffer
-            pad_fut = torch.zeros(1, self.block_size, self.bn_buffer.shape[-1],
-                                  device=self.bn_buffer.device, dtype=self.bn_buffer.dtype)
+            pad_fut = last_frame.repeat(1, self.block_size, 1)
             cond = torch.cat([pad_cur, pad_fut], dim=1)
             self.bn_buffer = None
             mel = self._vc_step(cond)
