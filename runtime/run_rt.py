@@ -207,10 +207,6 @@ class VCRunner:
             bn = torch.cat(bns, dim=0)  # [N, 256]
             bn = bn.unsqueeze(0)        # [1, N, 256]
 
-            # Drop first 2 BN from fbank cache overlap, cache last frame
-            if had_fbank_cache and len(bns) > 1:
-                bn = bn[:, 2:, :]
-
             if self.encoder_output_cache is not None:
                 bn = torch.cat([self.encoder_output_cache, bn], dim=1)
             self.encoder_output_cache = bn[:, -1:, :]
