@@ -267,7 +267,7 @@ If you find our work helpful, please cite:
 
 For questions or collaborations, please contact: guobin.ma@mail.nwpu.edu.cn or lxie@nwpu.edu.cn
 
-You’re welcome to join our WeChat group for technical discussions, updates.
+You’re welcome to join our WeChat group for technical discussions and updates.
 
 <p align="center">
     <img src="figs/wechat.jpg" width="300">
