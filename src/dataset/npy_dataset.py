@@ -5,9 +5,14 @@ Format of file list (one line per utterance):
   utt|bn_path|mel_path|xvector_path
 
 All fields are required and point to .npy files.
+
+BN is stored at 40ms/frame; mel at 10ms/frame.
+BN is interpolated 4x in __getitem__ so both have the same frame rate
+before entering the batch — matching inference behaviour.
 """
 import numpy as np
 import torch
+import torch.nn.functional as F
 from torch.utils.data import Dataset
 
 
@@ -51,28 +56,33 @@ class NpyDataset(Dataset):
         sample = self.samples[idx]
         features = {}
 
-        # Load BN
-        bn = np.load(sample["bn"])  # (T, 256) float32
-        features["bn"] = torch.from_numpy(bn).float()
+        # Load BN (40ms rate) → interpolate 4x to match mel rate (10ms)
+        bn = torch.from_numpy(np.load(sample["bn"])).float()          # (T_bn, 256)
+        bn = bn.unsqueeze(0).transpose(1, 2)                          # (1, 256, T_bn)
+        bn = F.interpolate(bn, size=int(bn.shape[2] * 4),
+                           mode='linear', align_corners=True)         # (1, 256, T_bn*4)
+        bn = bn.transpose(1, 2).squeeze(0)                            # (T_bn*4, 256)
+        features["bn"] = bn
 
-        # Load mel
-        mel = np.load(sample["mel"])  # (T, 80) float32
-        features["mel"] = torch.from_numpy(mel).float()
+        # Load mel (10ms rate, same frame rate as interpolated BN)
+        mel = torch.from_numpy(np.load(sample["mel"])).float()        # (T_mel, 80)
+        features["mel"] = mel
 
         # Load xvector
-        xvector = np.load(sample["xvector"])  # (256,) float32
-        xvector = torch.from_numpy(xvector).float().squeeze()
-        features["xvector"] = xvector  # (256,)
+        xvector = torch.from_numpy(np.load(sample["xvector"])).float().squeeze()
+        features["xvector"] = xvector                                    # (256,)
 
-        # input length in time frames
-        features["inputs_length"] = torch.tensor(features["mel"].size(0)).long()
+        # Truncate to max_len (shorter of bn / mel)
+        min_len = min(bn.shape[0], mel.shape[0], self.max_len)
+        features["bn"] = features["bn"][:min_len]
+        features["mel"] = features["mel"][:min_len]
+        features["inputs_length"] = torch.tensor(min_len).long()
 
         return features
 
-    @staticmethod
-    def custom_collate_fn(batch):
-        """Pad features to max length in batch."""
-        feature_list = ["bn", "mel", "xvector", "inputs_length"]
+    def custom_collate_fn(self, batch):
+        """Pad features to max length in batch using configured pad values."""
+        feature_list = self.feature_list + self.additional_feature_list + ["inputs_length"]
         max_len = max(b["mel"].size(0) for b in batch)
 
         out = {}
@@ -80,14 +90,14 @@ class NpyDataset(Dataset):
             if key == "inputs_length":
                 out[key] = torch.stack([b[key] for b in batch])
             elif key == "xvector":
-                out[key] = torch.stack([b[key] for b in batch])  # (B, 256)
-            else:  # bn, mel → pad along time axis
+                out[key] = torch.stack([b[key] for b in batch])            # (B, 256)
+            else:
                 val_list = []
                 for b in batch:
                     val = b[key]
                     pad_len = max_len - val.size(0)
                     if pad_len > 0:
-                        val = torch.nn.functional.pad(val, (0, 0, 0, pad_len))
+                        val = F.pad(val, (0, 0, 0, pad_len), value=0.0)
                     val_list.append(val)
                 out[key] = torch.stack(val_list)
         return out
