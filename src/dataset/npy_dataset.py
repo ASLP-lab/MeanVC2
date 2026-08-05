@@ -6,9 +6,9 @@ Format of file list (one line per utterance):
 
 All fields are required and point to .npy files.
 
-BN is stored at 40ms/frame; mel at 10ms/frame.
-BN is interpolated 4x in __getitem__ so both have the same frame rate
-before entering the batch — matching inference behaviour.
+BN is stored at 40 ms/frame (extracted by preprocess/extract_bn_*.py);
+mel is stored at 10 ms/frame.  BN is interpolated 4× in __getitem__ so
+both features enter the model at the same frame rate.
 """
 import numpy as np
 import torch
@@ -72,7 +72,7 @@ class NpyDataset(Dataset):
         xvector = torch.from_numpy(np.load(sample["xvector"])).float().squeeze()
         features["xvector"] = xvector                                    # (256,)
 
-        # Truncate to max_len (shorter of bn / mel)
+        # Truncate to min(bn_len, mel_len, max_len)
         min_len = min(bn.shape[0], mel.shape[0], self.max_len)
         features["bn"] = features["bn"][:min_len]
         features["mel"] = features["mel"][:min_len]
@@ -81,7 +81,7 @@ class NpyDataset(Dataset):
         return features
 
     def custom_collate_fn(self, batch):
-        """Pad features to max length in batch using configured pad values."""
+        """Pad features to max length in batch."""
         feature_list = self.feature_list + self.additional_feature_list + ["inputs_length"]
         max_len = max(b["mel"].size(0) for b in batch)
 
