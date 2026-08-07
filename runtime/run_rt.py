@@ -84,7 +84,8 @@ class VCRunner:
     def __init__(self, target_wav: str, device: str = "cpu", model: str = "120ms"):
         self.device = device
         torch.set_num_threads(1)
-
+        torch.backends.cudnn.enabled = False  # disable cuDNN for GPU Conv2d consistency with training data
+      
         paths = MODEL_PATHS[model]
         vc_ckpt = paths["ckpt"]
         vc_config = paths["config"]
