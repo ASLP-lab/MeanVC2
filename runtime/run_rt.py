@@ -140,9 +140,14 @@ class VCRunner:
         self._init_cache()
 
     def _init_cache(self):
-        self.samples_cache_len = 400 + 2 * 160
-        self.samples_cache = np.full(self.samples_cache_len, -0.5, dtype=np.float32)
-        self.fbank_cache = None
+        # Keep only the samples that no frame has covered yet, so that the frame
+        # grid of the streaming path lands on the same sample offsets as a
+        # whole-utterance kaldi.fbank call.  With frame_length=400 / frame_shift=160
+        # and a 2560-sample chunk the steady-state remainder is 320 samples.
+        # Starting from an empty cache (instead of a constant-valued pad) keeps the
+        # very first frame at sample 0, which is where the offline path starts too.
+        self.samples_cache = np.zeros(0, dtype=np.float32)
+        self.frame_cache = None
         self.encoder_output_cache = None
         self.asr_offset = self._asr_offset_init
         self.asr_att_cache = torch.zeros(6, 4, self._required_cache_size, 128)
@@ -164,10 +169,16 @@ class VCRunner:
 
     def _encode_chunk(self, samples: np.ndarray) -> torch.Tensor | None:
         with torch.no_grad():
-            padded = np.concatenate((self.samples_cache, samples))
-            self.samples_cache = padded[-self.samples_cache_len:]
+            padded = (np.concatenate((self.samples_cache, samples))
+                      if self.samples_cache.size else samples)
 
-            # Extract fbanks (same as original)
+            # The tail of a chunk can be shorter than one frame; hold it back
+            # until enough samples have arrived.
+            if len(padded) < 400:
+                self.samples_cache = padded
+                return None
+
+            # Extract fbanks (same parameters as preprocess/extract_bn_160ms.py)
             wav_scaled = padded * (1 << 15)
             wav_t = torch.from_numpy(wav_scaled).unsqueeze(0)
             fbanks = kaldi.fbank(wav_t, frame_length=25, frame_shift=10,
@@ -175,11 +186,16 @@ class VCRunner:
                                  energy_floor=0.0, dither=0.0,
                                  sample_frequency=16000)
 
-            # Prepend cached fbank frames for continuity
-            had_fbank_cache = self.fbank_cache is not None
-            if had_fbank_cache:
-                fbanks = torch.cat([self.fbank_cache, fbanks], dim=0)
-            self.fbank_cache = fbanks[-3:]  # cache overlap for next chunk
+            # Carry over only the samples beyond the last frame that was emitted.
+            # frame k starts at sample 160*k, so everything from 160*n_frames on
+            # is still unseen and belongs to the next call.
+            self.samples_cache = padded[160 * fbanks.shape[0]:]
+
+            # Carry over the frames the sliding window could not consume yet.
+            # (Re-deriving them from the sample overlap, as the previous version
+            # did, fed the same absolute frame to the ASR encoder twice.)
+            if self.frame_cache is not None:
+                fbanks = torch.cat([self.frame_cache, fbanks], dim=0)
 
             # Reset ASR offset periodically — preserve cache-relative position
             if self.asr_offset >= 4000:
@@ -200,6 +216,7 @@ class VCRunner:
                 bns.append(out.squeeze(0).detach())
                 self.asr_offset += self._asr_offset_step
                 i += self._bn_stride
+            self.frame_cache = fbanks[i:]
 
             if not bns:
                 return None
