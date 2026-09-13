@@ -200,7 +200,7 @@ class Trainer:
             shuffle=True,
             num_workers=self.args.num_workers,
             pin_memory=True,
-            collate_fn=NpyDataset.custom_collate_fn,
+            collate_fn=dataset.custom_collate_fn,
             persistent_workers=self.args.num_workers > 0,
         )
 
